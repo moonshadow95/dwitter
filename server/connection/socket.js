@@ -18,7 +18,7 @@ class Socket {
         next();
       });
     });
-    this.on("connection", (token) => {
+    this.io.on("connection", (token) => {
       console.log("Socket client connected");
     });
   }
