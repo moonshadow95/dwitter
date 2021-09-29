@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/moonshadow95/dweeter#readme",
   "dependencies": {
-    "bcrypt": "^5.0.1",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
@@ -28,6 +28,7 @@
     "helmet": "^4.6.0",
     "jsonwebtoken": "^8.5.1",
     "morgan": "^1.10.0",
+    "mysql2": "^2.3.0",
     "socket.io": "^4.2.0"
   },
   "devDependencies": {
