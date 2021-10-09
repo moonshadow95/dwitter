@@ -1,43 +1,67 @@
-import { db } from '../db/database.js';
 import * as userRepository from './auth.js';
+import { getTweets } from '../db/database.js';
+import MongoDB from 'mongodb';
 
-const SELECT_JOIN =
-  'SELECT tw.id, tw.text, tw.createdAt, tw.userId, us.username, us.name, us.url FROM tweets as tw JOIN users as us ';
-const ORDER_DESC = 'ORDER BY tw.createdAt DESC';
+// NoSQL (정보의 중복 > 관계)
+const ObjectId = MongoDB.ObjectId;
+
+// 관계를 설정하기보다 중복된 정보를 가지는 것이 성능적으로 더 좋다. (NoSQL의 수평적인 장점을 지키기 위함)
 export async function getAll() {
-  return db
-    .execute(`${SELECT_JOIN} ${ORDER_DESC}`) //
-    .then((result) => result[0]);
+  return getTweets() //
+    .find()
+    .sort({ createdAt: -1 })
+    .toArray()
+    .then(mapTweets);
 }
 
 export async function getAllByUsername(username) {
-  return db
-    .execute(`${SELECT_JOIN} WHERE username=? ${ORDER_DESC}`, [username]) //
-    .then((result) => result[0]);
+  return getTweets() //
+    .find({ username })
+    .sort({ createdAt: -1 })
+    .toArray()
+    .then(mapTweets);
 }
 
 export async function getById(id) {
-  return db
-    .execute(`${SELECT_JOIN} WHERE tw.id=?`, [id]) //
-    .then((result) => result[0][0]);
+  return getTweets()
+    .findOne({ _id: new ObjectId(id) })
+    .then(mapOptionalTweet);
 }
 
 export async function create(text, userId) {
-  return db
-    .execute('INSERT INTO tweets (text, createdAt, userId) VALUES(?,?,?)', [
-      text,
-      new Date(),
-      userId,
-    ])
-    .then((result) => getById(result[0].insertId));
+  const { name, username, url } = await userRepository.findById(userId);
+  const tweet = {
+    text,
+    createAt: new Date(),
+    userId,
+    name: name,
+    username: username,
+    url: url,
+  };
+  return getTweets()
+    .insertOne(tweet)
+    .then((data) => mapOptionalTweet({ ...tweet, _id: data.insertedId }));
 }
 
 export async function update(id, text) {
-  return db
-    .execute('UPDATE tweets SET text=? WHERE id=?', [text, id])
-    .then(() => getById(id));
+  return getTweets()
+    .findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: { text } },
+      { returnDocument: 'after' }
+    )
+    .then((result) => result.value)
+    .then(mapOptionalTweet);
 }
 
 export async function remove(id) {
-  return db.execute('DELETE FROM tweets WHERE id=?', [id]);
+  return getTweets().deleteOne({ _id: new ObjectId(id) });
+}
+
+function mapOptionalTweet(tweet) {
+  return tweet ? { ...tweet, id: tweet._id.toString() } : tweet;
+}
+
+function mapTweets(tweets) {
+  return tweets.map(mapOptionalTweet);
 }
