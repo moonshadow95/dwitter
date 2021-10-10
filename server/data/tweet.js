@@ -6,6 +6,21 @@ import MongoDB from 'mongodb';
 const ObjectId = MongoDB.ObjectId;
 
 // 관계를 설정하기보다 중복된 정보를 가지는 것이 성능적으로 더 좋다. (NoSQL의 수평적인 장점을 지키기 위함)
+export async function create(text, userId) {
+  const { name, username, url } = await userRepository.findById(userId);
+  const tweet = {
+    text,
+    createAt: new Date(),
+    userId,
+    name: name,
+    username: username,
+    url: url,
+  };
+  return getTweets()
+    .insertOne(tweet)
+    .then((data) => mapOptionalTweet({ ...tweet, _id: data.insertedId }));
+}
+
 export async function getAll() {
   return getTweets() //
     .find()
@@ -26,21 +41,6 @@ export async function getById(id) {
   return getTweets()
     .findOne({ _id: new ObjectId(id) })
     .then(mapOptionalTweet);
-}
-
-export async function create(text, userId) {
-  const { name, username, url } = await userRepository.findById(userId);
-  const tweet = {
-    text,
-    createAt: new Date(),
-    userId,
-    name: name,
-    username: username,
-    url: url,
-  };
-  return getTweets()
-    .insertOne(tweet)
-    .then((data) => mapOptionalTweet({ ...tweet, _id: data.insertedId }));
 }
 
 export async function update(id, text) {
