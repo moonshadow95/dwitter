@@ -1,5 +1,5 @@
-import { useVirtualId } from '../db/database.js';
 import Mongoose from 'mongoose';
+import { useVirtualId } from '../db/database.js';
 
 const userSchema = new Mongoose.Schema({
   username: { type: String, required: true },
@@ -18,7 +18,7 @@ export async function findByUsername(username) {
 }
 
 export async function findById(id) {
-  return User.findById({ id });
+  return User.findById(id);
 }
 
 export async function createUser(user) {
